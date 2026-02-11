@@ -16,6 +16,9 @@ function Participant({ participantId }) {
   const videoRef = useRef(null);
   const audioRef = useRef(null);
 
+    const isRelayed = !isLocal && displayName === localStorage.getItem("username");
+
+
   useEffect(() => {
     if (webcamOn && webcamStream && videoRef.current) {
       videoRef.current.srcObject = new MediaStream([webcamStream.track]);
@@ -43,6 +46,7 @@ function Participant({ participantId }) {
       <audio ref={audioRef} autoPlay muted={isLocal} />
       <div className="participant-name">
         {displayName}
+        {isRelayed ? " (Relayed from other room)" : ` (${roomId})`}
       </div>
     </div>
   );
@@ -55,7 +59,11 @@ function MeetingView({ roomId, onLeave, onSwitch }) {
     leave,
     requestMediaRelay,
     stopMediaRelay,
-  } = useMeeting();
+  } = useMeeting({
+  onMediaRelayStarted: ({ meetingId }) => {
+    console.log("Relay started from:", meetingId);
+  },
+});
 
   const [started, setStarted] = useState(false);
   const [relayActive, setRelayActive] = useState(false);
