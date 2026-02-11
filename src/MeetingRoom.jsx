@@ -52,17 +52,20 @@ function MeetingView({ roomId, onLeave, onSwitch }) {
     stopMediaRelay,
   } = useMeeting();
 
+  const [started, setStarted] = useState(false);
   const [relayActive, setRelayActive] = useState(false);
-
-  useEffect(() => {
-    join();
-  }, []);
 
   const participantCount = participants.size;
 
   const otherRoomKey =
     roomId === getRoomId("ROOM_1") ? "ROOM_2" : "ROOM_1";
   const otherRoomId = getRoomId(otherRoomKey);
+
+  // 🔹 Explicit user action to start meeting (REQUIRED for production)
+  const startMeeting = () => {
+    join();
+    setStarted(true);
+  };
 
   // 🔹 DEMO A: Start Relay
   const handleRelay = async () => {
@@ -89,6 +92,19 @@ function MeetingView({ roomId, onLeave, onSwitch }) {
     }, 300);
   };
 
+  // 🟡 PRE-JOIN SCREEN (important for Netlify / HTTPS)
+  if (!started) {
+    return (
+      <div className="container">
+        <h3>Ready to join meeting</h3>
+        <button onClick={startMeeting}>
+          Start Meeting
+        </button>
+      </div>
+    );
+  }
+
+  // 🟢 ACTUAL MEETING UI
   return (
     <div className="meeting-container">
       {/* Room ID */}
