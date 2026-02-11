@@ -9,27 +9,35 @@ import { generateToken } from "./token";
 import { getUserName } from "./userIdentity";
 import "./styles.css";
 
-function Participant({ participantId }) {
-  const { webcamStream, micStream, webcamOn, micOn, isLocal, displayName, } =
-    useParticipant(participantId);
+/* ================= PARTICIPANT ================= */
+
+function Participant({ participantId, roomLabel }) {
+  const {
+    webcamStream,
+    micStream,
+    webcamOn,
+    micOn,
+    isLocal,
+    displayName,
+  } = useParticipant(participantId);
 
   const videoRef = useRef(null);
   const audioRef = useRef(null);
 
-    const isRelayed = !isLocal && displayName === localStorage.getItem("username");
-
+  const isRelayed =
+    !isLocal && displayName === localStorage.getItem("username");
 
   useEffect(() => {
     if (webcamOn && webcamStream && videoRef.current) {
       videoRef.current.srcObject = new MediaStream([webcamStream.track]);
-      videoRef.current.play();
+      videoRef.current.play().catch(() => {});
     }
   }, [webcamStream, webcamOn]);
 
   useEffect(() => {
     if (micOn && micStream && audioRef.current) {
       audioRef.current.srcObject = new MediaStream([micStream.track]);
-      audioRef.current.play();
+      audioRef.current.play().catch(() => {});
     }
   }, [micStream, micOn]);
 
@@ -44,13 +52,18 @@ function Participant({ participantId }) {
         />
       )}
       <audio ref={audioRef} autoPlay muted={isLocal} />
+
       <div className="participant-name">
         {displayName}
-        {isRelayed ? " (Relayed from other room)" : ` (${roomId})`}
+        {isRelayed
+          ? " (Relayed from other room)"
+          : ` (${roomLabel})`}
       </div>
     </div>
   );
 }
+
+/* ================= MEETING VIEW ================= */
 
 function MeetingView({ roomId, onLeave, onSwitch }) {
   const {
@@ -60,27 +73,31 @@ function MeetingView({ roomId, onLeave, onSwitch }) {
     requestMediaRelay,
     stopMediaRelay,
   } = useMeeting({
-  onMediaRelayStarted: ({ meetingId }) => {
-    console.log("Relay started from:", meetingId);
-  },
-});
+    onMediaRelayStarted: ({ meetingId }) => {
+      console.log("Relay started to:", meetingId);
+    },
+  });
 
   const [started, setStarted] = useState(false);
   const [relayActive, setRelayActive] = useState(false);
 
   const participantCount = participants.size;
 
+  const roomLabel =
+    roomId === getRoomId("ROOM_1") ? "Room 1" : "Room 2";
+
   const otherRoomKey =
     roomId === getRoomId("ROOM_1") ? "ROOM_2" : "ROOM_1";
+
   const otherRoomId = getRoomId(otherRoomKey);
 
-  // 🔹 Explicit user action to start meeting (REQUIRED for production)
+  /* Required for browser autoplay policy */
   const startMeeting = () => {
     join();
     setStarted(true);
   };
 
-  // 🔹 DEMO A: Start Relay
+  /* DEMO A: Media Relay */
   const handleRelay = async () => {
     await requestMediaRelay({
       destinationMeetingId: otherRoomId,
@@ -89,7 +106,7 @@ function MeetingView({ roomId, onLeave, onSwitch }) {
     setRelayActive(true);
   };
 
-  // 🔹 Stop relay before switch
+  /* Switch Room (leave → join) */
   const handleSwitch = async () => {
     if (relayActive) {
       stopMediaRelay(otherRoomId);
@@ -105,39 +122,38 @@ function MeetingView({ roomId, onLeave, onSwitch }) {
     }, 300);
   };
 
-  // 🟡 PRE-JOIN SCREEN (important for Netlify / HTTPS)
+  /* PRE-JOIN SCREEN */
   if (!started) {
     return (
       <div className="container">
         <h3>Ready to join meeting</h3>
-        <button onClick={startMeeting}>
-          Start Meeting
-        </button>
+        <button onClick={startMeeting}>Start Meeting</button>
       </div>
     );
   }
 
-  // 🟢 ACTUAL MEETING UI
+  /* MEETING UI */
   return (
     <div className="meeting-container">
-      {/* Room ID */}
       <div className="room-id-bar">
         <span>Room ID:</span>
         <strong>{roomId}</strong>
       </div>
 
-      {/* Video area */}
       <div
         className={`video-area ${
           participantCount === 1 ? "single-user" : "multi-user"
         }`}
       >
         {[...participants.keys()].map((id) => (
-          <Participant key={id} participantId={id} />
+          <Participant
+            key={id}
+            participantId={id}
+            roomLabel={roomLabel}
+          />
         ))}
       </div>
 
-      {/* Controls */}
       <div className="control-bar">
         <button onClick={handleRelay} disabled={relayActive}>
           Relay to Other Room
@@ -161,10 +177,12 @@ function MeetingView({ roomId, onLeave, onSwitch }) {
   );
 }
 
+/* ================= PROVIDER ================= */
+
 export default function MeetingRoom({ roomId, token, onLeave }) {
   const [nextRoom, setNextRoom] = useState(null);
   const [nextToken, setNextToken] = useState(null);
-  const [originRoom, setOriginRoom] = useState(roomId);
+  const [originRoom] = useState(roomId);
 
   const baseName = getUserName();
 
