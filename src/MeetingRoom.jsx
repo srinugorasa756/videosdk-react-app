@@ -6,9 +6,11 @@ import {
 import { useRef, useEffect, useState } from "react";
 import { getRoomId } from "./roomManager";
 import { generateToken } from "./token";
+import { getUserName } from "./userIdentity";
+import "./styles.css";
 
 function Participant({ participantId }) {
-  const { webcamStream, micStream, webcamOn, micOn, isLocal } =
+  const { webcamStream, micStream, webcamOn, micOn, isLocal, displayName, } =
     useParticipant(participantId);
 
   const videoRef = useRef(null);
@@ -29,7 +31,7 @@ function Participant({ participantId }) {
   }, [micStream, micOn]);
 
   return (
-    <>
+    <div className="participant-tile">
       {webcamOn && (
         <video
           ref={videoRef}
@@ -39,7 +41,10 @@ function Participant({ participantId }) {
         />
       )}
       <audio ref={audioRef} autoPlay muted={isLocal} />
-    </>
+      <div className="participant-name">
+        {displayName}
+      </div>
+    </div>
   );
 }
 
@@ -151,6 +156,16 @@ function MeetingView({ roomId, onLeave, onSwitch }) {
 export default function MeetingRoom({ roomId, token, onLeave }) {
   const [nextRoom, setNextRoom] = useState(null);
   const [nextToken, setNextToken] = useState(null);
+  const [originRoom, setOriginRoom] = useState(roomId);
+
+  const baseName = getUserName();
+
+  const displayName =
+    roomId === originRoom
+      ? `${baseName} (${roomId === getRoomId("ROOM_1") ? "Room 1" : "Room 2"})`
+      : `${baseName} (Switched from ${
+          originRoom === getRoomId("ROOM_1") ? "Room 1" : "Room 2"
+        })`;
 
   if (nextRoom) {
     return (
@@ -168,7 +183,7 @@ export default function MeetingRoom({ roomId, token, onLeave }) {
         meetingId: roomId,
         micEnabled: true,
         webcamEnabled: true,
-        name: "User",
+        name: displayName,
       }}
       token={token}
     >
