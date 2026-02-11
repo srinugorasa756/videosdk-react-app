@@ -182,17 +182,10 @@ function MeetingView({ roomId, onLeave, onSwitch }) {
 export default function MeetingRoom({ roomId, token, onLeave }) {
   const [nextRoom, setNextRoom] = useState(null);
   const [nextToken, setNextToken] = useState(null);
-  const [originRoom] = useState(roomId);
 
   const baseName = getUserName();
 
-  const displayName =
-    roomId === originRoom
-      ? `${baseName} (${roomId === getRoomId("ROOM_1") ? "Room 1" : "Room 2"})`
-      : `${baseName} (Switched from ${
-          originRoom === getRoomId("ROOM_1") ? "Room 1" : "Room 2"
-        })`;
-
+  const displayName =baseName;
   if (nextRoom) {
     return (
       <MeetingRoom
