@@ -174,4 +174,18 @@ input {
   text-overflow: ellipsis;
 
   pointer-events: none;
+
+  backdrop-filter: blur(6px);
+}
+
+.participant-name.switched {
+  background: rgba(0, 128, 255, 0.75);
+}
+
+.participant-name.room-1 {
+  background: rgba(0, 200, 83, 0.7);
+}
+
+.participant-name.room-2 {
+  background: rgba(255, 87, 34, 0.7);
 }
